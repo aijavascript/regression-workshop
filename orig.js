@@ -14,6 +14,7 @@ function setup() {
 }
 
 function draw() {
+  console.log("here");
   background(51);
   intro();
   plotData();
@@ -83,6 +84,7 @@ function h(x) {
 }
 
 function drawLine() {
+  console.log("here2");
   let x1 = 0.0;
   let y1 = h(x1);
   let x2 = 1.0;
