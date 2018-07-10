@@ -4,8 +4,8 @@
  */
 
 // This will store mouse x,y points that have been scaled from 0->1
-X = [];
-Y = [];
+let Xs = [];
+let Ys = [];
 
 // This scales a value from 0 to max to 0 to 1
 const norm = (x, max) => map(x, 0, max, 0, 1);
@@ -26,9 +26,9 @@ This function is called every time a mouse is clicked.
 */
 function mouseClicked() {
   console.log("Clicked", `${mouseX}, ${mouseY}`);
-  let Xnorm = normX(mouseX);
-  let Ynorm = normY(mouseY);
-  X.push(Xnorm);
-  Y.push(Ynorm);
-  console.log([X, Y]);
+  const x = normX(mouseX);
+  const y = normY(mouseY);
+  Xs.push(x);
+  Ys.push(y);
+  console.log([Xs, Ys]);
 }

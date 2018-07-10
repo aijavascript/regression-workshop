@@ -1,57 +1,46 @@
 /**
- * We now use tensorflow to calcualte the values of M and C which give us the lowest loss
+ * We now use tensorflow to calcualte the values of A and C which give us the lowest mean square loss
  *
  * 1. Add the tensorflow section
  * 2. On mouse click call train
- * - Set M and C so the line is drawn (dataSync)
+ * - Set A and C so the line is drawn (dataSync)
  * - Add tf.nextFrame so it will animate
  * - Set the iterations higher so it will animate more
  * 3. Expose the LOSS value so it will render
  * 4. Expose the INTERATIONS value so it will render
  */
 
+// We are storing some global variables, current values of things in our calculations so we can show it with p5
 let LOSS = 0;
-let ITERATION = 0;
+let CURRENT_EPOCH = 0;
 
 // Play arround with these numbers to see what happens
-let M = -0.4;
+let A = -0.4;
 let C = 100;
 
 // This will store mouse x,y points that have been scaled from 0->1
-X = [];
-Y = [];
+let Xs = [];
+let Ys = [];
+
+const MAX_EPOCHS = 300;
 
 // Calculate Y from X
-const getY = x => M * x + C; // We have to take it away from windowHeight because 0 is the top of the screen instead of the bottom
+const getY = x => A * x + C;
 
 // This scales a value from 0 to max to 0 to 1
 const norm = (x, max) => map(x, 0, max, 0, 1);
+const normX = x => norm(x, windowWidth);
+const normY = x => norm(x, windowHeight);
 
 // This scales a value from 0 to 1 to 0 to max
 const denorm = (x, max) => map(x, 0, 1, 0, max);
+const denormX = x => denorm(x, windowWidth);
+const denormY = x => denorm(x, windowHeight);
 
-// /**
-//  * The loss is calculated as the squred difference between the Y value of the mouse clicks and the actual Y value from the line which we then turn into a mean.
-//  *
-//  * The closer the mouse clicks are to the line the lower the value of the loss!
-//  */
-// function calculateLoss() {
-//   let squaredDiff = 0;
+/*********************** TENSORFLOW START ***********************************/
 
-//   for (let i = 0; i < X.length; i++) {
-//     let x = X[i];
-//     let y = Y[i];
-//     let actualY = norm(getY(x), windowHeight);
-//     squaredDiff += Math.pow(actualY - y, 2);
-//   }
-//   LOSS = squaredDiff / X.length;
-//   console.log(LOSS);
-// }
-
-/** TENSORFLOW */
-
-// Create tensors to store the weights of `m` and `c`
-const m = tf.variable(tf.scalar(Math.random()));
+// Create variables to store the weights of `A` and `C`
+const a = tf.variable(tf.scalar(Math.random()));
 const c = tf.variable(tf.scalar(Math.random()));
 
 // Setup the optimiser
@@ -63,7 +52,7 @@ const optimizer = tf.train.sgd(learningRate);
 // Is passed in an array of X values and returns an array of predicted Y values based on the current values of m and c weights
 function predict(x) {
   // y = m * x + b
-  return m.mul(x).add(c);
+  return a.mul(x).add(c);
 }
 
 // When passed in the array of predictedYs calculates the mean square loss compared to the actualYs
@@ -81,35 +70,37 @@ function loss(predictedYs, actualYs) {
 // use the actualXs to calculate the prdictedYs
 // pass predictedYs and actualYs to the optimiser and try to minimise that value
 async function train(numIterations = 1) {
-  if (X.length) {
-    for (ITERATION = 0; ITERATION < numIterations; ITERATION++) {
+  if (Xs.length) {
+    for (CURRENT_EPOCH = 0; CURRENT_EPOCH < numIterations; CURRENT_EPOCH++) {
       tf.tidy(() => {
-        const actualXs = tf.tensor(X, [X.length, 1]);
-        const actualYs = tf.tensor(Y, [Y.length, 1]);
+        const actualXs = tf.tensor(Xs, [Xs.length, 1]);
+        const actualYs = tf.tensor(Ys, [Ys.length, 1]);
 
-        optimizer.minimize(() => loss(predict(actualXs), actualYs));
+        optimizer.minimize(() => {
+          let predictedYs = predict(actualXs);
+          return loss(predictedYs, actualYs);
+        });
 
-        M = m.dataSync()[0];
+        A = a.dataSync()[0];
         C = c.dataSync()[0];
-        // console.log(M, C);
+        // console.log(A, C);
       });
       await tf.nextFrame();
     }
   }
 }
 
-/** TENSORFLOW */
+/*********************** TENSORFLOW END ***********************************/
 
 function mouseClicked() {
   console.log("Clicked", `${mouseX}, ${mouseY}`);
-  let Xnorm = norm(mouseX, windowWidth);
-  let Ynorm = norm(mouseY, windowHeight);
-  X.push(Xnorm);
-  Y.push(Ynorm);
-  train(100);
+  let x = normX(mouseX);
+  let y = normY(mouseY);
+  Xs.push(x);
+  Ys.push(y);
+  // Everytime we click a mouse we run for this many epochs
+  train(MAX_EPOCHS);
 }
-
-/*************************************************************** */
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -118,28 +109,25 @@ function setup() {
 function draw_points() {
   noStroke();
   fill(51);
-  for (let i = 0; i < X.length; i++) {
-    let denormX = denorm(X[i], windowWidth);
-    let denormY = denorm(Y[i], windowHeight);
-    ellipse(denormX, denormY, 10);
+  for (let i = 0; i < Xs.length; i++) {
+    let x = denormX(Xs[i]);
+    let y = denormY(Ys[i]);
+    ellipse(x, y, 10);
   }
   noFill();
 }
 
+/**
+ * !NOTE! We now have to use denorm functions because the variables A and C are being calcualted for normalised points
+ */
 function draw_line() {
-  const startX = 0;
-  const startY = getY(startX);
-  const endX = windowWidth;
-  const endY = getY(endX);
-
-  const denormStartX = denorm(startX, windowWidth);
-  const denormStartY = denorm(startY, windowHeight);
-  const denormEndX = denorm(endX, windowWidth);
-  const denormEndY = denorm(endY, windowHeight);
-
   stroke(51);
-  strokeWeight(2);
-  line(denormStartX, denormStartY, denormEndX, denormEndY);
+  const x1 = denormX(0); // Start on the furthest left
+  const y1 = denormY(getY(x1)); // Get the y value for this
+  const x2 = denormX(1); // End on the furthest right
+  const y2 = denormY(getY(1)); // Get the y value for this
+  line(x1, y1, x2, y2);
+  noStroke();
 }
 
 function draw_loss() {
@@ -156,7 +144,7 @@ function draw_iteration() {
   fill(0);
   textSize(20);
   textFont("monospace");
-  text(ITERATION, windowWidth - 40, windowHeight - 20);
+  text(CURRENT_EPOCH, windowWidth - 40, windowHeight - 20);
   noFill();
 }
 

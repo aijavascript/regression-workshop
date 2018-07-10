@@ -1,27 +1,28 @@
 /**
  * The equation of a line is
  *
- * Y = MX + C
+ * Y = A*X + C - where A and C are constants and X is a variable.
  *
- * This demo will show you how to draw a line based off that function
+ * This demo will show you how to draw a line on the screen based off that function
  */
 
 // Play arround with these numbers to see what happens
-let M = 1;
-let C = 100;
+const A = 1;
+const C = 100;
 
-const getY = x => windowHeight - (M * x + C); // We have to take it away from windowHeight because 0 is the top of the screen instead of the bottom
+// Given the value of X return the value of Y using the equation of a line to calculate
+const getY = x => A * x + C;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
 }
 
 function draw() {
-  const startX = 0;
-  const startY = getY(startX);
-  const endX = windowWidth;
-  const endY = getY(endX);
+  const x1 = 0; // Start on the furthest left
+  const y1 = getY(x1); // Get the y value for this
+  const x2 = windowWidth; // End on the furthest right
+  const y2 = getY(x2); // Get the y value for this
   stroke(51);
   strokeWeight(10);
-  line(startX, startY, endX, endY);
+  line(x1, y1, x2, y2);
 }

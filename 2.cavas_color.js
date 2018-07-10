@@ -11,7 +11,7 @@ function setup() {
  */
 function draw() {
   // Then we can draw in this canvas, let's set the background color.
-  background(51); // Gray scale, from 0 (black) to 256 (white)
-  background("red"); // Can give a name
+  // background(51); // Gray scale, from 0 (black) to 256 (white)
+  // background("red"); // Can give a name
   background(34, 12, 44); // Can give exact red, green, blue values
 }

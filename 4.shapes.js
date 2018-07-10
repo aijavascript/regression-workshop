@@ -4,11 +4,11 @@ function setup() {
 
 function draw() {
   // 1
-  ellipse(20, 20, 10);
+  // ellipse(20, 20, 10);
   // 2
-  fill(250);
-  ellipse(windowWidth / 2, windowHeight / 2, 100);
-  // 3
+  // fill(250);
+  // ellipse(windowWidth / 2, windowHeight / 2, 100);
+  //   // 3
   strokeWeight(10);
   stroke(250);
   ellipse(windowWidth / 2, windowHeight / 2, 100);
